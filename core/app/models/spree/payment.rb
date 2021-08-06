@@ -16,7 +16,6 @@ module Spree
       belongs_to :order, class_name: 'Spree::Order', touch: true
       belongs_to :payment_method, -> { with_deleted }, class_name: 'Spree::PaymentMethod'
     end
-    belongs_to :source, polymorphic: true
 
     has_many :offsets, -> { offset_payment }, class_name: 'Spree::Payment', foreign_key: :source_id
     has_many :log_entries, as: :source
@@ -109,6 +108,16 @@ module Spree
           next_state: transition.to,
           name: 'payment'
         )
+      end
+    end
+
+    def source
+      return nil if source_id.nil?
+
+      if source_type == 'Spree::CreditCard'
+        CreditCard.with_deleted.find(source_id)
+      else
+        source_type.constantize.find(source_id)
       end
     end
 
